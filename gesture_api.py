@@ -12,10 +12,21 @@ CORS(app)
 # ✅ GLOBAL STATE
 running = False
 
+# ✅ Debug: check files on Render
+print("📂 Files in directory:", os.listdir())
+
+model_path = "sign_language_model.p"
+
+if not os.path.exists(model_path):
+    raise Exception("❌ Model file NOT found")
+
+bundle = pickle.load(open(model_path, "rb"))
+
 # 🔹 Load model
-bundle = pickle.load(open("sign_language_model.p", "rb"))
+#bundle = pickle.load(open("sign_language_model.p", "rb"))
 model = bundle["model"]
 le = bundle["label_encoder"]
+print("✅ Model loaded successfully")
 
 # 🔹 MediaPipe setup (optimized)
 mp_hands = mp.solutions.hands
