@@ -43,7 +43,7 @@ print("✅ Model loaded successfully")
 #     min_tracking_confidence=0.7
 # )
 
-print("✅ MediaPipe initialized")
+# print("✅ MediaPipe initialized")
 
 # ✅ Health check (important for Render)
 @app.route("/")
@@ -67,7 +67,7 @@ def stop():
     return jsonify({"status": "stopped"})
 
 # 🔥 Predict
-@app.route("/predict", methods=["POST"])
+@app.route("/predict", methods=["GET", "POST"])
 def predict():
     global running
 
