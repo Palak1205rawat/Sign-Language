@@ -29,12 +29,21 @@ le = bundle["label_encoder"]
 print("✅ Model loaded successfully")
 
 # 🔹 MediaPipe setup (optimized)
-mp_hands = mp.solutions.hands
+# mp_hands = mp.solutions.hands
+# hands = mp_hands.Hands(
+#     max_num_hands=1,
+#     min_detection_confidence=0.7,
+#     min_tracking_confidence=0.7
+# )
+from mediapipe.python.solutions import hands as mp_hands
+
 hands = mp_hands.Hands(
     max_num_hands=1,
     min_detection_confidence=0.7,
     min_tracking_confidence=0.7
 )
+
+print("✅ MediaPipe initialized")
 
 # ✅ Health check (important for Render)
 @app.route("/")
