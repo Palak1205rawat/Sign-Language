@@ -1,0 +1,22 @@
+# Virtual Environment
+clean_env/
+venv/
+env/
+
+# Dataset (training data)
+dataset/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter notebooks (optional)
+.ipynb_checkpoints/
+*.ipynb
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
