@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pickle
 import cv2
 import numpy as np
-import mediapipe as mp
+# import mediapipe as mp
 import os
 
 app = Flask(__name__)
@@ -35,13 +35,13 @@ print("✅ Model loaded successfully")
 #     min_detection_confidence=0.7,
 #     min_tracking_confidence=0.7
 # )
-from mediapipe.python.solutions import hands as mp_hands
+# from mediapipe.python.solutions import hands as mp_hands
 
-hands = mp_hands.Hands(
-    max_num_hands=1,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7
-)
+# hands = mp_hands.Hands(
+#     max_num_hands=1,
+#     min_detection_confidence=0.7,
+#     min_tracking_confidence=0.7
+# )
 
 print("✅ MediaPipe initialized")
 
@@ -71,48 +71,56 @@ def stop():
 def predict():
     global running
 
-    print("📥 Request received")
-
     if not running:
         return jsonify({"label": ""})
 
-    if "frame" not in request.files:
-        return jsonify({"label": "No frame received"})
+    return jsonify({"label": "Gesture coming from frontend"})
+# @app.route("/predict", methods=["POST"])
+# def predict():
+#     global running
 
-    file = request.files["frame"]
+#     print("📥 Request received")
 
-    try:
-        # Convert image
-        img = np.frombuffer(file.read(), np.uint8)
-        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+#     if not running:
+#         return jsonify({"label": ""})
 
-        if frame is None:
-            return jsonify({"label": "Invalid frame"})
+#     if "frame" not in request.files:
+#         return jsonify({"label": "No frame received"})
 
-        frame = cv2.flip(frame, 1)
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+#     file = request.files["frame"]
 
-        result = hands.process(rgb)
+#     try:
+#         # Convert image
+#         img = np.frombuffer(file.read(), np.uint8)
+#         frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
 
-        label = "No hand detected"
+#         if frame is None:
+#             return jsonify({"label": "Invalid frame"})
 
-        if result.multi_hand_landmarks:
-            for handLms in result.multi_hand_landmarks:
-                data = []
+#         frame = cv2.flip(frame, 1)
+#         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                for lm in handLms.landmark:
-                    data.extend([lm.x, lm.y, lm.z])
+#         result = hands.process(rgb)
 
-                if len(data) == 63:
-                    pred = model.predict([data])
-                    label = str(le.inverse_transform(pred)[0])
-                    print("🤟 Prediction:", label)
+#         label = "No hand detected"
 
-        return jsonify({"label": label})
+#         if result.multi_hand_landmarks:
+#             for handLms in result.multi_hand_landmarks:
+#                 data = []
 
-    except Exception as e:
-        print("❌ Error:", str(e))
-        return jsonify({"label": "Error"})
+#                 for lm in handLms.landmark:
+#                     data.extend([lm.x, lm.y, lm.z])
+
+#                 if len(data) == 63:
+#                     pred = model.predict([data])
+#                     label = str(le.inverse_transform(pred)[0])
+#                     print("🤟 Prediction:", label)
+
+#         return jsonify({"label": label})
+
+#     except Exception as e:
+#         print("❌ Error:", str(e))
+#         return jsonify({"label": "Error"})
 
 # ✅ Render compatible run
 if __name__ == "__main__":
