@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pickle
 import cv2
 import numpy as np
-# import mediapipe as mp
+import mediapipe as mp
 import os
 
 app = Flask(__name__)
@@ -29,11 +29,12 @@ le = bundle["label_encoder"]
 print("✅ Model loaded successfully")
 
 # 🔹 MediaPipe setup (optimized)
-import mediapipe as mp
 mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(max_num_hands=1)
-# mp_hands = mp.solutions.hands
-# hands = mp_hands.Hands(max_num_hands=1)
+hands = mp_hands.Hands(
+    static_image_mode=True,
+    max_num_hands=1,
+    min_detection_confidence=0.7
+)
 # mp_hands = mp.solutions.hands
 # hands = mp_hands.Hands(
 #     max_num_hands=1,
@@ -74,45 +75,37 @@ def stop():
 # 🔥 Predict
 @app.route("/predict", methods=["POST"])
 def predict():
-    global running
-
-    if not running:
-        return jsonify({"label": ""})
+    print("📥 Predict request received")
 
     if "frame" not in request.files:
         return jsonify({"label": "No frame received"})
 
-    try:
-        file = request.files["frame"]
+    file = request.files["frame"]
 
-        img = np.frombuffer(file.read(), np.uint8)
-        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+    img = np.frombuffer(file.read(), np.uint8)
+    frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
 
-        if frame is None:
-            return jsonify({"label": "Invalid frame"})
+    if frame is None:
+        return jsonify({"label": "Invalid frame"})
 
-        frame = cv2.flip(frame, 1)
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    frame = cv2.flip(frame, 1)
+    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-        result = hands.process(rgb)
+    result = hands.process(rgb)
 
-        label = "No hand detected"
+    label = "No hand detected"
 
-        if result.multi_hand_landmarks:
-            for handLms in result.multi_hand_landmarks:
-                data = []
-                for lm in handLms.landmark:
-                    data.extend([lm.x, lm.y, lm.z])
+    if result.multi_hand_landmarks:
+        for handLms in result.multi_hand_landmarks:
+            data = []
+            for lm in handLms.landmark:
+                data.extend([lm.x, lm.y, lm.z])
 
-                if len(data) == 63:
-                    pred = model.predict([data])
-                    label = str(le.inverse_transform(pred)[0])
+            if len(data) == 63:
+                pred = model.predict([data])
+                label = str(le.inverse_transform(pred)[0])
 
-        return jsonify({"label": label})
-
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({"label": "Error"})
+    return jsonify({"label": label})
 # @app.route("/predict", methods=["GET", "POST"])
 # def predict():
 #     global running
