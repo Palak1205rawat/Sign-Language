@@ -1,111 +1,147 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import pickle
-import cv2
-import numpy as np
-import mediapipe as mp
 import os
 
 app = Flask(__name__)
 CORS(app)
 
-# ✅ GLOBAL STATE
-running = False
+print("📂 Files:", os.listdir())
 
-# ✅ Debug: check files on Render
-print("📂 Files in directory:", os.listdir())
-
-model_path = "sign_language_model.p"
-
-if not os.path.exists(model_path):
-    raise Exception("❌ Model file NOT found")
-
-bundle = pickle.load(open(model_path, "rb"))
-
-# 🔹 Load model
-#bundle = pickle.load(open("sign_language_model.p", "rb"))
+bundle = pickle.load(open("sign_language_model.p", "rb"))
 model = bundle["model"]
 le = bundle["label_encoder"]
-print("✅ Model loaded successfully")
 
-# 🔹 MediaPipe setup (optimized)
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(
-    static_image_mode=True,
-    max_num_hands=1,
-    min_detection_confidence=0.7
-)
-# mp_hands = mp.solutions.hands
-# hands = mp_hands.Hands(
-#     max_num_hands=1,
-#     min_detection_confidence=0.7,
-#     min_tracking_confidence=0.7
-# )
-# from mediapipe.python.solutions import hands as mp_hands
-
-# hands = mp_hands.Hands(
-#     max_num_hands=1,
-#     min_detection_confidence=0.7,
-#     min_tracking_confidence=0.7
-# )
-
-# print("✅ MediaPipe initialized")
-
-# ✅ Health check (important for Render)
 @app.route("/")
 def home():
-    return "Gesture API is running successfully"
+    return "Gesture API is running"
 
-# ▶️ Start
-@app.route("/start", methods=["GET"])
-def start():
-    global running
-    running = True
-    print("🟢 Gesture Started")
-    return jsonify({"status": "started"})
-
-# ⏹️ Stop
-@app.route("/stop", methods=["GET"])
-def stop():
-    global running
-    running = False
-    print("🔴 Gesture Stopped")
-    return jsonify({"status": "stopped"})
-
-# 🔥 Predict
 @app.route("/predict", methods=["POST"])
 def predict():
-    print("📥 Predict request received")
+    try:
+        req = request.get_json()
 
-    if "frame" not in request.files:
-        return jsonify({"label": "No frame received"})
+        if not req or "landmarks" not in req:
+            return jsonify({"label": "No data"})
 
-    file = request.files["frame"]
+        data = req["landmarks"]
 
-    img = np.frombuffer(file.read(), np.uint8)
-    frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+        if len(data) != 63:
+            return jsonify({"label": "Invalid input"})
 
-    if frame is None:
-        return jsonify({"label": "Invalid frame"})
+        pred = model.predict([data])
+        label = le.inverse_transform(pred)[0]
 
-    frame = cv2.flip(frame, 1)
-    rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        return jsonify({"label": label})
 
-    result = hands.process(rgb)
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"label": "Error"})
 
-    label = "No hand detected"
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)
 
-    if result.multi_hand_landmarks:
-        for handLms in result.multi_hand_landmarks:
-            data = []
-            for lm in handLms.landmark:
-                data.extend([lm.x, lm.y, lm.z])
+# from flask import Flask, jsonify, request
+# from flask_cors import CORS
+# import pickle
+# # import cv2
+# import numpy as np
+# # import mediapipe as mp
+# import os
 
-            if len(data) == 63:
-                pred = model.predict([data])
-                label = str(le.inverse_transform(pred)[0])
+# app = Flask(__name__)
+# CORS(app)
 
-    return jsonify({"label": label})
+# # ✅ GLOBAL STATE
+# running = False
+
+# # ✅ Debug: check files on Render
+# print("📂 Files in directory:", os.listdir())
+
+# model_path = "sign_language_model.p"
+
+# if not os.path.exists(model_path):
+#     raise Exception("❌ Model file NOT found")
+
+# bundle = pickle.load(open(model_path, "rb"))
+
+# # 🔹 Load model
+# #bundle = pickle.load(open("sign_language_model.p", "rb"))
+# model = bundle["model"]
+# le = bundle["label_encoder"]
+# print("✅ Model loaded successfully")
+
+# # 🔹 MediaPipe setup (optimized)
+# # mp_hands = mp.solutions.hands
+# # hands = mp_hands.Hands(
+# #     static_image_mode=True,
+# #     max_num_hands=1,
+# #     min_detection_confidence=0.7
+# # )
+# # mp_hands = mp.solutions.hands
+# # hands = mp_hands.Hands(
+# #     max_num_hands=1,
+# #     min_detection_confidence=0.7,
+# #     min_tracking_confidence=0.7
+# # )
+# # from mediapipe.python.solutions import hands as mp_hands
+
+# # hands = mp_hands.Hands(
+# #     max_num_hands=1,
+# #     min_detection_confidence=0.7,
+# #     min_tracking_confidence=0.7
+# # )
+
+# # print("✅ MediaPipe initialized")
+
+# # ✅ Health check (important for Render)
+# @app.route("/")
+# def home():
+#     return "Gesture API is running successfully"
+
+# # ▶️ Start
+# @app.route("/start", methods=["GET"])
+# def start():
+#     global running
+#     running = True
+#     print("🟢 Gesture Started")
+#     return jsonify({"status": "started"})
+
+# # ⏹️ Stop
+# @app.route("/stop", methods=["GET"])
+# def stop():
+#     global running
+#     running = False
+#     print("🔴 Gesture Stopped")
+#     return jsonify({"status": "stopped"})
+
+# # 🔥 Predict
+# @app.route("/predict", methods=["POST"])
+# def predict():
+#     try:
+#         req = request.get_json()
+
+#         if not req or "landmarks" not in req:
+#             return jsonify({"label": "No data received"})
+
+#         data = req["landmarks"]
+
+#         if len(data) != 63:
+#             return jsonify({"label": "Invalid landmarks"})
+
+#         pred = model.predict([data])
+#         label = le.inverse_transform(pred)[0]
+
+#         return jsonify({"label": label})
+
+#     except Exception as e:
+#         print("Error:", e)
+#         return jsonify({"label": "Error"})
+# ✅ Render compatible run
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 5001))
+#     app.run(host="0.0.0.0", port=port)
 # @app.route("/predict", methods=["GET", "POST"])
 # def predict():
 #     global running
@@ -161,10 +197,7 @@ def predict():
 #         print("❌ Error:", str(e))
 #         return jsonify({"label": "Error"})
 
-# ✅ Render compatible run
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5001))
-    app.run(host="0.0.0.0", port=port)
+
 
 # from flask import Flask, jsonify, request
 # from flask_cors import CORS
