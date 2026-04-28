@@ -29,6 +29,9 @@ le = bundle["label_encoder"]
 print("✅ Model loaded successfully")
 
 # 🔹 MediaPipe setup (optimized)
+import mediapipe as mp
+mp_hands = mp.solutions.hands
+hands = mp_hands.Hands(max_num_hands=1)
 # mp_hands = mp.solutions.hands
 # hands = mp_hands.Hands(max_num_hands=1)
 # mp_hands = mp.solutions.hands
@@ -71,7 +74,45 @@ def stop():
 # 🔥 Predict
 @app.route("/predict", methods=["POST"])
 def predict():
-    return jsonify({"label": "ok"})
+    global running
+
+    if not running:
+        return jsonify({"label": ""})
+
+    if "frame" not in request.files:
+        return jsonify({"label": "No frame received"})
+
+    try:
+        file = request.files["frame"]
+
+        img = np.frombuffer(file.read(), np.uint8)
+        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            return jsonify({"label": "Invalid frame"})
+
+        frame = cv2.flip(frame, 1)
+        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+        result = hands.process(rgb)
+
+        label = "No hand detected"
+
+        if result.multi_hand_landmarks:
+            for handLms in result.multi_hand_landmarks:
+                data = []
+                for lm in handLms.landmark:
+                    data.extend([lm.x, lm.y, lm.z])
+
+                if len(data) == 63:
+                    pred = model.predict([data])
+                    label = str(le.inverse_transform(pred)[0])
+
+        return jsonify({"label": label})
+
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({"label": "Error"})
 # @app.route("/predict", methods=["GET", "POST"])
 # def predict():
 #     global running
