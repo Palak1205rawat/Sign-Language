@@ -6,7 +6,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-gesture_running = False
+# gesture_running = False
+# gesture_state = {}
 
 print("📂 Files:", os.listdir())
 
@@ -18,17 +19,17 @@ le = bundle["label_encoder"]
 def home():
     return "Gesture API is running"
 
-@app.route("/start", methods=["POST"])
-def start():
-    global gesture_running
-    gesture_running = True
-    return {"status": "gesture started"}
+# @app.route("/start", methods=["POST"])
+# def start():
+#     # global gesture_running
+#     # gesture_running = True
+#     return {"status": "gesture started"}
 
-@app.route("/stop", methods=["POST"])
-def stop():
-    global gesture_running
-    gesture_running = False
-    return {"status": "gesture stopped"}
+# @app.route("/stop", methods=["POST"])
+# def stop():
+#     # global gesture_running
+#     # gesture_running = False
+#     return {"status": "gesture stopped"}
 
 @app.route("/predict", methods=["POST"])
 def predict():
