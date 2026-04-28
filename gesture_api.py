@@ -71,45 +71,7 @@ def stop():
 # 🔥 Predict
 @app.route("/predict", methods=["POST"])
 def predict():
-    global running
-
-    if not running:
-        return jsonify({"label": ""})
-
-    if "frame" not in request.files:
-        return jsonify({"label": "No frame received"})
-
-    try:
-        file = request.files["frame"]
-
-        img = np.frombuffer(file.read(), np.uint8)
-        frame = cv2.imdecode(img, cv2.IMREAD_COLOR)
-
-        if frame is None:
-            return jsonify({"label": "Invalid frame"})
-
-        frame = cv2.flip(frame, 1)
-        rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        result = hands.process(rgb)
-
-        label = "No hand detected"
-
-        if result.multi_hand_landmarks:
-            for handLms in result.multi_hand_landmarks:
-                data = []
-                for lm in handLms.landmark:
-                    data.extend([lm.x, lm.y, lm.z])
-
-                if len(data) == 63:
-                    pred = model.predict([data])
-                    label = str(le.inverse_transform(pred)[0])
-
-        return jsonify({"label": label})
-
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({"label": "Error"})
+    return jsonify({"label": "ok"})
 # @app.route("/predict", methods=["GET", "POST"])
 # def predict():
 #     global running
