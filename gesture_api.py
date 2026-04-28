@@ -3,7 +3,7 @@ from flask_cors import CORS
 import pickle
 import cv2
 import numpy as np
-import mediapipe as mp
+# import mediapipe as mp
 import os
 
 app = Flask(__name__)
@@ -29,8 +29,8 @@ le = bundle["label_encoder"]
 print("✅ Model loaded successfully")
 
 # 🔹 MediaPipe setup (optimized)
-mp_hands = mp.solutions.hands
-hands = mp_hands.Hands(max_num_hands=1)
+# mp_hands = mp.solutions.hands
+# hands = mp_hands.Hands(max_num_hands=1)
 # mp_hands = mp.solutions.hands
 # hands = mp_hands.Hands(
 #     max_num_hands=1,
