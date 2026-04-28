@@ -6,6 +6,8 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+gesture_running = False
+
 print("📂 Files:", os.listdir())
 
 bundle = pickle.load(open("sign_language_model.p", "rb"))
@@ -15,6 +17,18 @@ le = bundle["label_encoder"]
 @app.route("/")
 def home():
     return "Gesture API is running"
+
+@app.route("/start", methods=["POST"])
+def start():
+    global gesture_running
+    gesture_running = True
+    return {"status": "gesture started"}
+
+@app.route("/stop", methods=["POST"])
+def stop():
+    global gesture_running
+    gesture_running = False
+    return {"status": "gesture stopped"}
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -37,10 +51,14 @@ def predict():
     except Exception as e:
         print("Error:", e)
         return jsonify({"label": "Error"})
-
+    
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5001))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
+# if __name__ == "__main__":
+#     port = int(os.environ.get("PORT", 10000))
+#     app.run(host="0.0.0.0", port=port)
 
 # from flask import Flask, jsonify, request
 # from flask_cors import CORS
